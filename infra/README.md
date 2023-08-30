@@ -15,5 +15,18 @@ cd tools
 
 
 
+tfstateの作成
+
+```
+export PROJECT_ID=$(gcloud config get-value project)
+gsutil mb gs://${PROJECT_ID}-tfstate
+gsutil versioning set on gs://${PROJECT_ID}-tfstate
+
+```
 
 
+以下だけは手動で有効化
+console.cloud.google.com/apis/api/cloudresourcemanager.googleapis.com/
+
+以下を手動で有効化
+https://console.cloud.google.com/customer-identity/providers
