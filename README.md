@@ -2,6 +2,12 @@
 
 https://zenn.dev/m0a/scraps/18f63fe1ca3af6
 
+# 構築手順
+
+```
+$ make setup
+$ make migrate_up
+```
 
 # terraformでやること
 
