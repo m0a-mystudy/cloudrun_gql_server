@@ -12,3 +12,6 @@ migrate_down:
 
 generate_models:
 	sqlboiler sqlite3 --output models --pkgname models --wipe
+
+gqlgen:
+	go run github.com/99designs/gqlgen@latest generate
