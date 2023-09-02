@@ -40,7 +40,7 @@ resource "google_cloud_run_v2_service" "cloudrun_gql_server" {
       max_instance_count = 1
     }
     containers {
-      image = "us-docker.pkg.dev/cloudrun/container/hello"
+      image = "${local.location}-docker.pkg.dev/${local.project}/repository/gql-server:latest"
 
       env {
         name  = "FOO"
