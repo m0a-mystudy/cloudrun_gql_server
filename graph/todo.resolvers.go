@@ -12,7 +12,9 @@ import (
 	"github.com/m0a/cloudrun_gql_server/auth"
 	"github.com/m0a/cloudrun_gql_server/graph/model"
 	"github.com/m0a/cloudrun_gql_server/models"
+	"github.com/samber/lo"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 // CreateTodo is the resolver for the createTodo field.
@@ -53,7 +55,37 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+	// GetUserIDFromContext関数を使用してユーザーIDを取得
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	u, err := models.Users(models.UserWhere.ID.EQ(userID)).One(ctx, r.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %v", err)
+	}
+
+	todos, err := models.Todos(
+		models.TodoWhere.UserID.EQ(userID),
+		qm.OrderBy(models.TodoColumns.Done, " ASC"),
+		qm.OrderBy(models.TodoColumns.ID, " ASC"),
+	).
+		All(ctx, r.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get todos: %v", err)
+	}
+	return lo.Map(todos, func(t *models.Todo, _ int) *model.Todo {
+		return &model.Todo{
+			ID:   strconv.FormatInt(t.ID.Int64, 10),
+			Text: t.Text,
+			Done: t.Done,
+			User: &model.User{
+				ID:       strconv.FormatInt(u.ID.Int64, 10),
+				Email:    u.Email,
+				Username: &u.Username.String,
+			},
+		}
+	}), nil
 }
 
 // Mutation returns MutationResolver implementation.
