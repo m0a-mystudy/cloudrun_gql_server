@@ -9,12 +9,14 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/m0a/cloudrun_gql_server/auth"
 	"github.com/m0a/cloudrun_gql_server/graph/model"
 	"github.com/m0a/cloudrun_gql_server/models"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/exp/slog"
 )
 
 // Signup is the resolver for the signup field.
@@ -90,5 +92,37 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, oldPassword strin
 
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Me - me"))
+	tokenString, ok := ctx.Value("token").(string)
+	if !ok || tokenString == "" {
+		return nil, fmt.Errorf("unauthenticated")
+	}
+
+	// JWTトークンをデコード
+	claims := &jwt.StandardClaims{}
+	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte("my-secret-key"), nil // 秘密鍵を指定
+	})
+	if err != nil {
+		return nil, fmt.Errorf("invalid token: %v", err)
+	}
+
+	r.Logger.Info("claims", slog.Any("claims", claims))
+
+	// デコードしたclaimsからユーザーIDを取得
+	userID, err := strconv.ParseInt(claims.Subject, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user id: %v", err)
+	}
+
+	// ユーザーIDを使用してデータベースからユーザー情報を取得
+	user, err := models.Users(models.UserWhere.ID.EQ(null.Int64From(userID))).One(ctx, r.DB)
+	if err != nil {
+		return nil, fmt.Errorf("could not find user: %v", err)
+	}
+
+	return &model.User{
+		ID:       strconv.FormatInt(user.ID.Int64, 10),
+		Email:    user.Email,
+		Username: &user.Username.String,
+	}, nil
 }

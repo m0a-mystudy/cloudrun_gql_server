@@ -15,6 +15,8 @@ require (
 	github.com/volatiletech/strmangle v0.0.5
 )
 
+require golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
+
 require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect

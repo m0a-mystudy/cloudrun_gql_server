@@ -17,7 +17,7 @@ func GenerateJWTToken(user *models.User) (string, error) {
 	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &jwt.StandardClaims{
 		Issuer:    projectID, // ここで projectID を設定
-		Subject:   fmt.Sprint(user.ID),
+		Subject:   fmt.Sprint(user.ID.Int64),
 		ExpiresAt: expirationTime.Unix(),
 	}
 
