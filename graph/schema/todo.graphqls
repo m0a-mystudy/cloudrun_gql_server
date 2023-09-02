@@ -15,10 +15,10 @@ type Query {
 
 input NewTodo {
   text: String!
-  userId: String!
 }
 
 type Mutation {
   createTodo(input: NewTodo!): Todo!
+  toggleTodoDone(id: ID!): Todo!
 }
 
