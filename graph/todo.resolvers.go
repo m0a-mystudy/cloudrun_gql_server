@@ -109,16 +109,17 @@ func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %v", err)
 	}
-
+	boil.DebugMode = true
 	todos, err := models.Todos(
 		models.TodoWhere.UserID.EQ(userID),
-		qm.OrderBy(models.TodoColumns.Done, " ASC"),
-		qm.OrderBy(models.TodoColumns.ID, " ASC"),
+		qm.OrderBy(models.TodoColumns.Done+" DESC"),
+		qm.OrderBy(models.TodoColumns.ID+" ASC"),
 	).
 		All(ctx, r.DB)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get todos: %v", err)
 	}
+	boil.DebugMode = false
 	return lo.Map(todos, func(t *models.Todo, _ int) *model.Todo {
 		return &model.Todo{
 			ID:   strconv.FormatInt(t.ID.Int64, 10),
