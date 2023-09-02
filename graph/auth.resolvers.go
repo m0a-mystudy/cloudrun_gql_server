@@ -13,7 +13,7 @@ import (
 	"github.com/m0a/cloudrun_gql_server/auth"
 	"github.com/m0a/cloudrun_gql_server/graph/model"
 	"github.com/m0a/cloudrun_gql_server/models"
-	"github.com/volatiletech/null/v8"
+	null "github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/exp/slog"

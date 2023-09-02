@@ -15,7 +15,7 @@ require (
 	github.com/volatiletech/strmangle v0.0.5
 )
 
-require golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
+require golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
 
 require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
