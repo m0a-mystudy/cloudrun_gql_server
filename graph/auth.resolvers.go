@@ -7,13 +7,50 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strconv"
 
+	"github.com/m0a/cloudrun_gql_server/auth"
 	"github.com/m0a/cloudrun_gql_server/graph/model"
+	"github.com/m0a/cloudrun_gql_server/models"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Signup is the resolver for the signup field.
 func (r *mutationResolver) Signup(ctx context.Context, email string, password string, username *string) (*model.AuthPayload, error) {
-	panic(fmt.Errorf("not implemented: Signup - signup"))
+	// パスワードをハッシュ化
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %v", err)
+	}
+
+	// ユーザー情報をデータベースに保存（sqlboilerを使用）
+	newUser := &models.User{
+		Email:        email,
+		PasswordHash: string(hashedPassword),
+		Username:     null.StringFromPtr(username), // sqlboilerのnullパッケージを使用
+	}
+
+	err = newUser.Insert(ctx, r.DB, boil.Infer())
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert new user: %v", err)
+	}
+
+	// JWTトークンを生成（この部分はプロジェクトによって異なる）
+	token, err := auth.GenerateJWTToken(newUser)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate JWT token: %v", err)
+	}
+
+	return &model.AuthPayload{
+		Token: token,
+		User: &model.User{
+			ID:       strconv.FormatInt(newUser.ID.Int64, 10),
+			Email:    email,
+			Username: username,
+		},
+	}, nil
 }
 
 // Login is the resolver for the login field.
