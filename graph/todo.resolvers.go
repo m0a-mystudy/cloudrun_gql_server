@@ -7,13 +7,48 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strconv"
 
+	"github.com/m0a/cloudrun_gql_server/auth"
 	"github.com/m0a/cloudrun_gql_server/graph/model"
+	"github.com/m0a/cloudrun_gql_server/models"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 // CreateTodo is the resolver for the createTodo field.
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+	// GetUserIDFromContext関数を使用してユーザーIDを取得
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// 新しいTodoアイテムをデータベースに挿入
+	newTodo := &models.Todo{
+		Text:   input.Text,
+		Done:   false, // デフォルト値
+		UserID: userID,
+	}
+	err = newTodo.Insert(ctx, r.DB, boil.Infer())
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert new todo: %v", err)
+	}
+
+	u, err := models.Users(models.UserWhere.ID.EQ(userID)).One(ctx, r.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %v", err)
+	}
+
+	return &model.Todo{
+		ID:   strconv.FormatInt(newTodo.ID.Int64, 10),
+		Text: newTodo.Text,
+		Done: newTodo.Done,
+		User: &model.User{
+			ID:       strconv.FormatInt(u.ID.Int64, 10),
+			Email:    u.Email,
+			Username: &u.Username.String,
+		},
+	}, nil
 }
 
 // Todos is the resolver for the todos field.
