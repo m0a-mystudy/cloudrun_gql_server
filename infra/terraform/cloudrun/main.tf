@@ -34,14 +34,27 @@ resource "google_cloud_run_v2_service" "cloudrun_gql_server" {
   name     = "cloudrun-gql-server"
   location = local.location
   project  = local.project
-
+  provider = google-beta
+  launch_stage = "BETA"
+  
   template {
     scaling {
       max_instance_count = 1
     }
+
+    volumes {
+      name = "sqlite"
+      empty_dir {
+        medium     = "MEMORY"
+        size_limit = "128Mi"
+      }
+    }
     containers {
       image = "${local.location}-docker.pkg.dev/${local.project}/repository/gql-server:latest"
-
+      volume_mounts {
+        name       = "sqlite"
+        mount_path = "/sqlite"
+      }
       env {
         name  = "FOO"
         value = "bar"
@@ -65,5 +78,5 @@ resource "google_cloud_run_service_iam_binding" "cloudrun_gql_server" {
   members = [
     "allUsers"
   ]
-  depends_on = [ google_cloud_run_v2_service.cloudrun_gql_server ]
+  depends_on = [google_cloud_run_v2_service.cloudrun_gql_server]
 }
