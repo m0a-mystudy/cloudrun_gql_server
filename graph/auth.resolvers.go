@@ -66,7 +66,7 @@ func (r *mutationResolver) Login(ctx context.Context, email string, password str
 	// 2. ハッシュ化されたパスワードと入力されたパスワードを比較
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return nil, fmt.Errorf("incorrect password: %v", err)
+		return nil, fmt.Errorf("incorrect password")
 	}
 
 	// 3. JWTトークンを生成
@@ -87,7 +87,50 @@ func (r *mutationResolver) Login(ctx context.Context, email string, password str
 
 // ChangePassword is the resolver for the changePassword field.
 func (r *mutationResolver) ChangePassword(ctx context.Context, oldPassword string, newPassword string) (bool, error) {
-	panic(fmt.Errorf("not implemented: ChangePassword - changePassword"))
+	// 1. トークンをコンテキストから取得
+	tokenString, ok := ctx.Value("token").(string)
+	if !ok || tokenString == "" {
+		return false, fmt.Errorf("unauthenticated")
+	}
+
+	// 2. トークンを検証してユーザーIDを取得
+	claims := &jwt.StandardClaims{}
+	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte("my-secret-key"), nil // 秘密鍵を指定
+	})
+	if err != nil {
+		return false, fmt.Errorf("invalid token: %v", err)
+	}
+	// デコードしたclaimsからユーザーIDを取得
+	userID, err := strconv.ParseInt(claims.Subject, 10, 64)
+	if err != nil {
+		return false, fmt.Errorf("invalid user id: %v", err)
+	}
+
+	// 3. ユーザーIDでデータベースから既存のパスワードを取得
+	user, err := models.Users(models.UserWhere.ID.EQ(null.Int64From(userID))).One(ctx, r.DB)
+	if err != nil {
+		return false, fmt.Errorf("could not find user: %v", err)
+	}
+
+	// 4. ハッシュ化されたパスワードとoldPasswordを比較
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPassword))
+	if err != nil {
+		return false, fmt.Errorf("incorrect password")
+	}
+	// 5. 新しいパスワードでデータベースを更新
+	// パスワードをハッシュ化
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return false, fmt.Errorf("failed to hash password: %v", err)
+	}
+	user.PasswordHash = string(hashedPassword)
+	_, err = user.Update(ctx, r.DB, boil.Infer())
+	if err != nil {
+		return false, fmt.Errorf("failed to update password: %v", err)
+	}
+
+	return true, nil
 }
 
 // Me is the resolver for the me field.
