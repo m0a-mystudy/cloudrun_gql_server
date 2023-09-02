@@ -1,0 +1,30 @@
+# ユーザー情報の型定義
+type User {
+  id: ID!
+  email: String!
+  username: String
+}
+
+# 認証トークンとユーザー情報を含む型定義
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
+# クエリ定義
+extend type Query {
+  # 現在認証されているユーザーの情報を取得
+  me: User
+}
+
+# ミューテーション定義
+extend type Mutation {
+  # サインアップ（新規登録）
+  signup(email: String!, password: String!, username: String): AuthPayload!
+
+  # ログイン
+  login(email: String!, password: String!): AuthPayload!
+
+  # パスワード変更
+  changePassword(oldPassword: String!, newPassword: String!): Boolean!
+}
