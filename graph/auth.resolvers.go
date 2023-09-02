@@ -55,7 +55,32 @@ func (r *mutationResolver) Signup(ctx context.Context, email string, password st
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, email string, password string) (*model.AuthPayload, error) {
-	panic(fmt.Errorf("not implemented: Login - login"))
+	// 1. データベースからユーザーを検索
+	user, err := models.Users(models.UserWhere.Email.EQ(email)).One(ctx, r.DB)
+	if err != nil {
+		return nil, fmt.Errorf("could not find user: %v", err)
+	}
+
+	// 2. ハッシュ化されたパスワードと入力されたパスワードを比較
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
+		return nil, fmt.Errorf("incorrect password: %v", err)
+	}
+
+	// 3. JWTトークンを生成
+	token, err := auth.GenerateJWTToken(user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate JWT token: %v", err)
+	}
+
+	return &model.AuthPayload{
+		Token: token,
+		User: &model.User{
+			ID:       strconv.FormatInt(user.ID.Int64, 10),
+			Email:    email,
+			Username: &user.Username.String,
+		},
+	}, nil
 }
 
 // ChangePassword is the resolver for the changePassword field.
