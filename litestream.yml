@@ -1,0 +1,4 @@
+dbs:
+  - path: ./database.sqlite3
+    replicas:
+      - url: gcs://m0a-dev-sqlite3-litestream/replicas

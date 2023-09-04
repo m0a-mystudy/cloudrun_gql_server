@@ -3,7 +3,7 @@
 # credentialなものだけvariableに記載する
 locals {
   project     = "m0a-dev"
-  bucket_name = "m0a-dev-sqlite3-backup"
+  bucket_name = "m0a-dev-sqlite3-litestream"
   location    = "asia-northeast1"
 }
 
@@ -25,42 +25,28 @@ resource "google_project_service" "service" {
 }
 
 
-# TODO
 # gcsバケットの作成(sqlite保存用)
-
+resource "google_storage_bucket" "sqlite" {
+  name          = local.bucket_name
+  project       = local.project
+  location      = "ASIA-NORTHEAST1"
+  storage_class = "STANDARD"
+}
 
 
 resource "google_cloud_run_v2_service" "cloudrun_gql_server" {
   name     = "cloudrun-gql-server"
   location = local.location
   project  = local.project
-  provider = google-beta
-  launch_stage = "BETA"
-  
+
   template {
     scaling {
       max_instance_count = 1
     }
 
-    volumes {
-      name = "sqlite"
-      empty_dir {
-        medium     = "MEMORY"
-        size_limit = "128 Mi"
-      }
-    }
     containers {
-      name = "gql-server"
       image = "${local.location}-docker.pkg.dev/${local.project}/repository/gql-server:latest"
-      ports {
-        container_port = 8080
-      }
-       depends_on = ["litestream"]
-      volume_mounts {
-        name       = "sqlite"
-        read_only = false
-        mount_path = "/sqlite"
-      }
+
       env {
         name  = "FOO"
         value = "bar"
@@ -73,25 +59,6 @@ resource "google_cloud_run_v2_service" "cloudrun_gql_server" {
       }
     }
 
-    containers {
-      name = "litestream"
-      image = "litestream/litestream:latest"
-      volume_mounts {
-        name       = "sqlite"
-        read_only = false
-        mount_path = "/sqlite"
-      }
-      env {
-        name  = "FOO"
-        value = "bar"
-      }
-      resources {
-        limits = {
-          # Memory usage limit (per container)
-          memory = "512Mi"
-        }
-      }
-    }
   }
   depends_on = [google_project_service.service]
 }
