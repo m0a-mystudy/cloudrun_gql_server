@@ -46,13 +46,39 @@ resource "google_cloud_run_v2_service" "cloudrun_gql_server" {
       name = "sqlite"
       empty_dir {
         medium     = "MEMORY"
-        size_limit = "128Mi"
+        size_limit = "128 Mi"
       }
     }
     containers {
+      name = "gql-server"
       image = "${local.location}-docker.pkg.dev/${local.project}/repository/gql-server:latest"
+      ports {
+        container_port = 8080
+      }
+       depends_on = ["litestream"]
       volume_mounts {
         name       = "sqlite"
+        read_only = false
+        mount_path = "/sqlite"
+      }
+      env {
+        name  = "FOO"
+        value = "bar"
+      }
+      resources {
+        limits = {
+          # Memory usage limit (per container)
+          memory = "512Mi"
+        }
+      }
+    }
+
+    containers {
+      name = "litestream"
+      image = "litestream/litestream:latest"
+      volume_mounts {
+        name       = "sqlite"
+        read_only = false
         mount_path = "/sqlite"
       }
       env {

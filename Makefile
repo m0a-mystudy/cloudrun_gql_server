@@ -6,7 +6,7 @@ setup: setup-ko-build
 	go install github.com/volatiletech/sqlboiler-sqlite3
 
 setup-ko-build:
-	gcloud builds submit --tag asia-northeast1-docker.pkg.dev/$(PROJECT_ID)/artifacts/ko-build ./ko-build
+	gcloud builds submit --tag asia-northeast1-docker.pkg.dev/$(PROJECT_ID)/repository/ko-build ./ko-build
 
 migrate_up:
 	migrate -database 'sqlite3://database.sqlite3' -path migrations/ up
