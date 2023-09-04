@@ -6,7 +6,7 @@ ENV PATH /usr/local/go/bin:$PATH
 ENV GOBIN /usr/local/go/bin
 
 RUN go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-
+RUN ls -l /usr/local/go/bin
 COPY ./ /app
 WORKDIR /app
 RUN go build -o main ./cmd/server
@@ -20,6 +20,8 @@ COPY --from=go-build /app/main ./main
 COPY --from=go-build /app/run.sh ./run.sh
 COPY --from=litestream /usr/local/bin/litestream /usr/local/bin/litestream
 COPY --from=go-build /usr/local/go/bin/migrate /usr/local/bin/migrate
+COPY --from=go-build /app/migrations /migrations
 COPY --from=go-build /app/litestream.yml /etc/litestream.yml
-
+ENV PATH /usr/local/bin:$PATH
+RUN ls -l /usr/local/bin
 CMD ["sh", "run.sh"]

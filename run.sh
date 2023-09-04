@@ -12,7 +12,7 @@ else
   # 初回起動時にはレプリカが未作成であり、リストアに失敗するので、
   # その場合には migrationを実行する
   echo "---- Failed to restore from Cloud Storage ----"
-  migrate -database 'sqlite3://database.sqlite3' -path migrations/ up
+  migrate -database 'sqlite3://database.sqlite3' -path /migrations/ up
 fi
 
 # メインプロセスに、litestreamによるレプリケーション、

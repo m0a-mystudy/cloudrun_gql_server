@@ -20,5 +20,6 @@ gqlgen:
 build-gql-server:
 	gcloud builds submit --tag asia-northeast1-docker.pkg.dev/$(PROJECT_ID)/repository/gql-server .
 
-
-
+.PHONY: deploy-gql-server
+deploy-gql-server:
+	gcloud run deploy cloudrun-gql-server --image asia-northeast1-docker.pkg.dev/$(PROJECT_ID)/repository/gql-server:latest --region asia-northeast1
