@@ -17,6 +17,9 @@ generate_models:
 gqlgen:
 	go run github.com/99designs/gqlgen@latest generate
 
+build-base:
+	gcloud builds submit --tag asia-northeast1-docker.pkg.dev/$(PROJECT_ID)/repository/base ./cloudbuild/base
+
 build-gql-server:
 	gcloud builds submit --tag asia-northeast1-docker.pkg.dev/$(PROJECT_ID)/repository/gql-server .
 
