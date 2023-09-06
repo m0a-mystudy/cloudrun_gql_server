@@ -1,27 +1,24 @@
 FROM golang:1.21 as go
 FROM litestream/litestream as litestream
-FROM gcr.io/google.com/cloudsdktool/cloud-sdk:slim as go-build
+
+FROM gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
 COPY --from=go  /usr/local/go /usr/local/go
+COPY --from=litestream /usr/local/bin/litestream /usr/local/go/bin/litestream
+
+RUN apk add build-base
+
 ENV PATH /usr/local/go/bin:$PATH
 ENV GOBIN /usr/local/go/bin
+RUN CGO_ENABLED=1 go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
-RUN go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-RUN ls -l /usr/local/go/bin
 COPY ./ /app
 WORKDIR /app
-RUN go build -o main ./cmd/server
+RUN CGO_ENABLED=1  go build -o app ./cmd/server
 
-# ADD https://github.com/benbjohnson/litestream/releases/download/v0.3.8/litestream-v0.3.11-linux-amd64-static.tar.gz /tmp/litestream.tar.gz
-# RUN tar -C /usr/local/go/bin -xzf /tmp/litestream.tar.gz
+RUN chmod +x run.sh
 
-FROM alpine
-# 1つ目のステージからバイナリだけコピー
-COPY --from=go-build /app/main ./main
-COPY --from=go-build /app/run.sh ./run.sh
-COPY --from=litestream /usr/local/bin/litestream /usr/local/bin/litestream
-COPY --from=go-build /usr/local/go/bin/migrate /usr/local/bin/migrate
-COPY --from=go-build /app/migrations /migrations
-COPY --from=go-build /app/litestream.yml /etc/litestream.yml
-ENV PATH /usr/local/bin:$PATH
-RUN ls -l /usr/local/bin
-CMD ["sh", "run.sh"]
+EXPOSE 8080
+ENV PORT 8080
+ENV HOSTNAME "0.0.0.0"
+
+CMD ["./run.sh"]
