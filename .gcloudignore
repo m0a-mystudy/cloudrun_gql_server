@@ -1,0 +1,5 @@
+.git
+infra/
+.vscode
+cloubuild/
+database.sqlite3 
