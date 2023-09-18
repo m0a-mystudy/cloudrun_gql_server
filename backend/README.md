@@ -11,7 +11,6 @@ $ make migrate_up
 
 # terraformでやること
 
-firebase authの有効化
 gcsバケットの作成
 clopudbuildを使ってdepolyする仕組み
 
