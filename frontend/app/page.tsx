@@ -1,4 +1,3 @@
-// 事前にTailwind CSSをインストールしておいてください。
 'use client';
 import { useState } from 'react';
 
