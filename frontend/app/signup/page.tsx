@@ -1,14 +1,25 @@
 'use client';
 import { useState } from 'react';
+import {useSignupMutation} from '@/app/hooks/use-signup';
 
 const Signup = () => {
+  const [, signup] = useSignupMutation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     // サインアップ処理（API呼び出し等）
-    console.log(`Email: ${email}, Password: ${password}`);
+    const result = await signup({email, password, username: email});
+    if (result.error) {
+      console.error(result.error);
+      return;
+    }
+
+    if (result.data?.signup.token) {
+      localStorage.setItem('token', result.data?.signup.token);
+    }
+    
   };
 
   return (

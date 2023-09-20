@@ -5,6 +5,8 @@ setup:
 	go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	go install github.com/volatiletech/sqlboiler-sqlite3
 
+dev:
+	air
 migrate_up:
 	migrate -database 'sqlite3://database.sqlite3' -path migrations/ up
 
