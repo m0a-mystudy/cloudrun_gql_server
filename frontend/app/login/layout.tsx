@@ -11,6 +11,9 @@ import {
   createClient,
 } from '@urql/next';
 
+// for debug
+// console.log({NEXT_PUBLIC_GQL_SERVER_HTTPCONNECTION: process.env.NEXT_PUBLIC_GQL_SERVER_HTTPCONNECTION});
+
 export default function Layout({ children }: React.PropsWithChildren) {
   const [client, ssr] = useMemo(() => {
     
