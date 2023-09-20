@@ -11,7 +11,15 @@ const Signup = () => {
     e.preventDefault();
     // サインアップ処理（API呼び出し等）
     const result = await signup({email, password, username: email});
-    console.log(result);
+    if (result.error) {
+      console.error(result.error);
+      return;
+    }
+
+    if (result.data?.signup.token) {
+      localStorage.setItem('token', result.data?.signup.token);
+    }
+    
   };
 
   return (
